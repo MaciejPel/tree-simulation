@@ -41,7 +41,7 @@ void draw_scene(GLFWwindow* window){
 	glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
 
 	Models::cone.drawWire();
-	// Models::cone.drawSolid();
+	Models::cone.drawSolid();
 
 	glfwSwapBuffers(window);
 }
