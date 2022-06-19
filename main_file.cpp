@@ -15,7 +15,7 @@
 float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
-float cameraSpeed = 0.1f;
+float cameraSpeed = 0.5f;
 
 glm::vec3 camera_position   = glm::vec3(0.0f, 0.0f,  10.0f);
 glm::vec3 camera_focus 		= glm::vec3(0.0f, 0.0f, -1.0f);
@@ -40,8 +40,8 @@ void draw_scene(GLFWwindow* window){
 	glUniformMatrix4fv(spLambert->u("M"), 1, false, glm::value_ptr(M));
 	glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
 
-	Models::cube.drawWire();
-	Models::cube.drawSolid();
+	Models::cone.drawWire();
+	// Models::cone.drawSolid();
 
 	glfwSwapBuffers(window);
 }
