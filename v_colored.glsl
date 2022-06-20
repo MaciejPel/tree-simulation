@@ -7,9 +7,11 @@ uniform mat4 M;
 
 //Atrybuty
 layout (location=0) in vec4 vertex; //wspolrzedne wierzcholka w przestrzeni modelu
-layout (location=1) in vec4 normal; //wektor normalny w wierzcholku
+layout (location=3) in vec4 color; //kolor wierzcho�ka
 
+out vec4 i_c;
 
 void main(void) {
+    i_c=color;
     gl_Position=P*V*M*vertex;
 }

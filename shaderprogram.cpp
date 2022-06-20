@@ -22,16 +22,26 @@ Place, Fifth Floor, Boston, MA  02110 - 1301  USA
 
 ShaderProgram *spLambert;
 ShaderProgram *spConstant;
+ShaderProgram* spColored;
+ShaderProgram* spTextured;
+ShaderProgram* spLambertTextured;
 
-void initShaders(){
-    spLambert=new ShaderProgram("v_lambert.glsl",NULL,"f_lambert.glsl");
-    spConstant=new ShaderProgram("v_constant.glsl",NULL,"f_constant.glsl");
+
+void initShaders() {
+	spLambert = new ShaderProgram("v_lambert.glsl", NULL, "f_lambert.glsl");
+	spConstant = new ShaderProgram("v_constant.glsl", NULL, "f_constant.glsl");
+	spTextured = new ShaderProgram("v_textured.glsl", NULL, "f_textured.glsl");
+	spColored = new ShaderProgram("v_colored.glsl", NULL, "f_colored.glsl");
+	spLambertTextured = new ShaderProgram("v_lamberttextured.glsl", NULL, "f_lamberttextured.glsl");
 }
 
-void freeShaders(){
-    delete spLambert;
+void freeShaders() {
+	delete spLambert;
+	delete spConstant;
+	delete spTextured;
+	delete spColored;
+	delete spLambertTextured;
 }
-
 
 //Procedura wczytuje plik do tablicy znaków.
 char* ShaderProgram::readFile(const char* fileName) {
