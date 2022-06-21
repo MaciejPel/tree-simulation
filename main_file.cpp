@@ -22,7 +22,7 @@ float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
 float cameraSpeed = 0.1f;
-float tree_growth = 0.0f, tree_growth_speed = 1.5f, tree_max_height = 7.0f;
+float tree_growth = 0.0f, tree_growth_speed = 1.5f, tree_max_height = 5.0f;
 float branch_growth = 0.0f, branch_growth_speed = 0.1f;
 GLuint tex;
 
@@ -47,15 +47,24 @@ float min(float a, float b){
 	return b;
 }
 
-void draw_root(int depth, float angle, float scaleXZ, float size, float offsetX){
-	float base_len = 10.0f;
+float positive(float a){
+	if(a<0) return -a;
+	return a;
+}
+float negative(float a){
+	if(a>0) return -a;
+	return a;
+}
+
+int max_depth = 6;
+
+void draw_root(int depth, float height, float angle, float radius, float offsetX, float offsetY){
 
 	if (depth > 0){
 		glm::mat4 M1 = glm::mat4(1.0f);
-		M1 = glm::translate(M1, glm::vec3(offsetX, 0.0f, 0.0f));
-		M1 = glm::translate(M1, glm::vec3(0.0f, size, 0.0f));
+		M1 = glm::translate(M1, glm::vec3(offsetX, offsetY, 0.0f));
 		M1 = glm::rotate(M1, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-		M1 = glm::scale(M1, glm::vec3(scaleXZ, size, scaleXZ));
+		M1 = glm::scale(M1, glm::vec3(radius, height, radius));
 
 		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M1));
 		glActiveTexture(GL_TEXTURE0); 
@@ -65,8 +74,10 @@ void draw_root(int depth, float angle, float scaleXZ, float size, float offsetX)
 		Models::cone.drawWire();
 		Models::cone.drawSolid();
 
-		draw_root(depth - 1, 45.0f, scaleXZ / 2, size / 2, -size / 2);
-		draw_root(depth - 1, -45.0f, scaleXZ / 2, size / 2, size / 2);
+		if(depth == max_depth) offsetX = 1.0f;
+
+		// draw_root(depth - 1, height / 2, angle - 40.0f , radius / 2, offsetX + (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
+		draw_root(depth - 1, height / 2, angle + 40.0f, radius / 2, -offsetX - (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
 	}
 }
 
@@ -81,13 +92,12 @@ void draw_scene(GLFWwindow* window){
 
 	M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
 	M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
-
 	spTextured->use();
-	glUniformMatrix4fv(spTextured->u("P"),1,false,glm::value_ptr(P));
-	glUniformMatrix4fv(spTextured->u("V"),1,false,glm::value_ptr(V));
-	glUniformMatrix4fv(spTextured->u("M"),1,false,glm::value_ptr(M));
+	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
 
-	draw_root(2, 0.0f, 1.0f, tree_max_height, 0.0f);
+	draw_root(max_depth, tree_max_height, 0.0f, 1.0f, 0.0f, tree_max_height);
 
 	glfwSwapBuffers(window);
 }
