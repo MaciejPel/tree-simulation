@@ -88,8 +88,6 @@ void draw_scene(GLFWwindow* window){
 	glm::mat4 V = glm::lookAt(camera_position, camera_position + camera_focus, camera_upVector);	
 	glm::mat4 M = glm::mat4(1.0f);
 
-	M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
-	M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
 	spTextured->use();
 	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
 	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
