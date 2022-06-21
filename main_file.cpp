@@ -20,7 +20,6 @@ using namespace std;
 
 float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
-float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
 float cameraSpeed = 0.1f;
 float tree_growth = 0.0f, tree_growth_speed = 1.5f, tree_max_height = 5.0f;
 float branch_growth = 0.0f, branch_growth_speed = 0.1f;
@@ -51,15 +50,14 @@ float positive(float a){
 	if(a<0) return -a;
 	return a;
 }
+
 float negative(float a){
 	if(a>0) return -a;
 	return a;
 }
 
 int max_depth = 6;
-
 void draw_root(int depth, float height, float angle, float radius, float offsetX, float offsetY){
-
 	if (depth > 0){
 		glm::mat4 M1 = glm::mat4(1.0f);
 		M1 = glm::translate(M1, glm::vec3(offsetX, offsetY, 0.0f));
@@ -76,8 +74,8 @@ void draw_root(int depth, float height, float angle, float radius, float offsetX
 
 		if(depth == max_depth) offsetX = 1.0f;
 
-		// draw_root(depth - 1, height / 2, angle - 40.0f , radius / 2, offsetX + (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
-		draw_root(depth - 1, height / 2, angle + 40.0f, radius / 2, -offsetX - (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
+		draw_root(depth - 1, height / 2, angle - 40.0f , radius / 2, offsetX + (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
+		// draw_root(depth - 1, height / 2, angle + 40.0f, radius / 2, -offsetX - (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
 	}
 }
 
@@ -137,16 +135,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	if(action == GLFW_PRESS){
 		if(key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
-		if(key == GLFW_KEY_LEFT) obj_speed_x= -PI;
-		if(key == GLFW_KEY_RIGHT) obj_speed_x = PI;
-		if(key == GLFW_KEY_UP) obj_speed_y = PI;
-		if(key == GLFW_KEY_DOWN) obj_speed_y = -PI;
-	}
-	if(action == GLFW_RELEASE){
-		if(key == GLFW_KEY_LEFT) obj_speed_x= 0;
-		if(key == GLFW_KEY_RIGHT) obj_speed_x = 0;
-		if(key == GLFW_KEY_UP) obj_speed_y = 0;
-		if(key == GLFW_KEY_DOWN) obj_speed_y = 0;
 	}
 }
 
@@ -223,8 +211,7 @@ int main(void){
 
 	init_opengl_program(window);
 	while (!glfwWindowShouldClose(window)){
-		obj_angle_x += obj_speed_x * glfwGetTime();
-		obj_angle_y += obj_speed_y * glfwGetTime();
+		tree_growth += tree_growth_speed * glfwGetTime();
 		process_movement(window);
 		glfwSetTime(0);
 		draw_scene(window);
@@ -232,7 +219,7 @@ int main(void){
 	}
 
 	free_opengl_program(window);
-	glDeleteTextures(1,&tex);
+	glDeleteTextures(1, &tex);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
