@@ -25,7 +25,7 @@ float tree_growth = 0.0f, tree_growth_speed = 1.5f, tree_max_height = 5.0f;
 float branch_growth = 0.0f, branch_growth_speed = 0.1f;
 GLuint tex;
 
-glm::vec3 camera_position   = glm::vec3(0.0f, 6.5f,  16.0f);
+glm::vec3 camera_position   = glm::vec3(0.0f, 0.0f,  15.0f);
 glm::vec3 camera_focus 		= glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 camera_upVector   = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -56,15 +56,15 @@ float negative(float a){
 	return a;
 }
 
-int max_depth = 6;
-void draw_root(int depth, float height, float angle, float radius, float offsetX, float offsetY){
+int max_depth = 4;
+void draw(int depth, float height, float x, float y, float angle, float radius){
 	if (depth > 0){
-		glm::mat4 M1 = glm::mat4(1.0f);
-		M1 = glm::translate(M1, glm::vec3(offsetX, offsetY, 0.0f));
-		M1 = glm::rotate(M1, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
-		M1 = glm::scale(M1, glm::vec3(radius, height, radius));
+		glm::mat4 M = glm::mat4(1.0f);
+		M = glm::translate(M, glm::vec3(x, y, 0.0f));
+		M = glm::rotate(M, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+		M = glm::scale(M, glm::vec3(radius, height, radius));
 
-		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M1));
+		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
 		glActiveTexture(GL_TEXTURE0); 
 		glBindTexture(GL_TEXTURE_2D,tex);
 		glUniform1i(spTextured->u("tex"), 0);
@@ -72,17 +72,23 @@ void draw_root(int depth, float height, float angle, float radius, float offsetX
 		Models::cone.drawWire();
 		Models::cone.drawSolid();
 
-		if(depth == max_depth) offsetX = 1.0f;
+		if (depth == max_depth) y = y + (height / 4);
+		float prevX = x, prevY = y;
 
-		draw_root(depth - 1, height / 2, angle - 40.0f , radius / 2, offsetX + (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
-		// draw_root(depth - 1, height / 2, angle + 40.0f, radius / 2, -offsetX - (height / 2 * radius * 2) / height, tree_max_height + sqrt(height / 2));
+		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + 40))) * height / 2;
+		y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
+		prevX = prevX + (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + 40))) * height / 2;
+		prevY = prevY + (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
+
+		draw(depth - 1, height / 2, x, y, angle - 40, radius / 2);
+		draw(depth - 1, height / 2, prevX, prevY, angle + 40, radius / 2);
 	}
 }
 
 void draw_scene(GLFWwindow* window){
 	// kod rysujący obraz
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.6, 0.8, 0.9, 0.5); 
+	glClearColor(0.6, 0.8, 0.9, 0.5);
 
 	glm::mat4 P = glm::perspective(50.0f * PI / 180.0f, window_width / window_height, 1.0f, 50.0f);
 	glm::mat4 V = glm::lookAt(camera_position, camera_position + camera_focus, camera_upVector);	
@@ -93,7 +99,7 @@ void draw_scene(GLFWwindow* window){
 	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
 	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
 
-	draw_root(max_depth, tree_max_height, 0.0f, 1.0f, 0.0f, tree_max_height);
+	draw(max_depth, tree_max_height, 0, 0, 0, 1);
 
 	glfwSwapBuffers(window);
 }
