@@ -21,12 +21,13 @@ using namespace std;
 float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float cameraSpeed = 0.1f;
-float tree_growth = 0.0f, tree_growth_speed = 1.0f, tree_max_height = 5.0f;
-int max_depth = 6;
+float tree_growth = 0.0f, tree_growth_speed = 1.2f, tree_max_height = 5.0f;
+const int max_depth = 6;
+float angles[max_depth] = { 0 };  
 GLuint tex;
 float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
 
-glm::vec3 camera_position   = glm::vec3(0.0f, 0.0f,  15.0f);
+glm::vec3 camera_position   = glm::vec3(0.0f, tree_max_height,  15.0f);
 glm::vec3 camera_focus 		= glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 camera_upVector   = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -35,26 +36,6 @@ float random(float a, float b) {
     float diff = b - a;
     float r = random * diff;
     return a + r;
-}
-
-float max(float a, float b){
-	if(a>b) return a;
-	return b;
-}
-
-float min(float a, float b){
-	if(a<b) return a;
-	return b;
-}
-
-float positive(float a){
-	if(a<0) return -a;
-	return a;
-}
-
-float negative(float a){
-	if(a>0) return -a;
-	return a;
 }
 
 void draw(int depth, float height, float x, float y, float angle, float radius){
@@ -71,15 +52,16 @@ void draw(int depth, float height, float x, float y, float angle, float radius){
 
 		Models::cone.drawWire();
 		Models::cone.drawSolid();
+		printf("%f %f\n", height, angles[depth]);
 
 		float prevX, prevY;
-		prevX = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle - 40))) * height / 2;
-        prevY = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle - 40))) * height / 2;
-		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + 40))) * height / 2;
-        y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
+		prevX = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle - angles[depth - 1]))) * height / 2;
+        prevY = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle - angles[depth - 1]))) * height / 2;
+		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + angles[depth -1]))) * height / 2;
+        y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + angles[depth -1 ]))) * height / 2;
 
-		draw(depth - 1, height / 2, prevX, prevY, angle + 40, radius / 2);
-		draw(depth - 1, height / 2, x, y, angle - 40, radius / 2);
+		draw(depth - 1, height / 2, prevX, prevY, angle + angles[depth - 1], radius / 2);
+		draw(depth - 1, height / 2, x, y, angle - angles[depth - 1], radius / 2);
 	}
 }
 
@@ -92,20 +74,20 @@ void draw_scene(GLFWwindow* window){
 	glm::mat4 V = glm::lookAt(camera_position, camera_position + camera_focus, camera_upVector);	
 	glm::mat4 M = glm::mat4(1.0f);
 
-	// spTextured->use();
-	// glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
-	// glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
-	// glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
-	// draw(max_depth, tree_growth, 0, tree_growth, 0, 1);
+	spTextured->use();
+	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
+	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
+	draw(max_depth, tree_growth, 0, tree_growth, angles[max_depth], 1);
 
-	M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
-	M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
-	spLambert->use();
-	glUniform4f(spLambert->u("color"), 0, 0, 0, 1);
-	glUniformMatrix4fv(spLambert->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(spLambert->u("M"), 1, false, glm::value_ptr(M));
-	glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
-	Models::leaf.drawWire();
+	// M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
+	// M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
+	// spLambert->use();
+	// glUniform4f(spLambert->u("color"), 0, 0, 0, 1);
+	// glUniformMatrix4fv(spLambert->u("P"), 1, false, glm::value_ptr(P));
+	// glUniformMatrix4fv(spLambert->u("M"), 1, false, glm::value_ptr(M));
+	// glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
+	// Models::leaf.drawWire();
 
 	glfwSwapBuffers(window);
 }
@@ -208,6 +190,11 @@ void init_opengl_program(GLFWwindow* window){
 }
 
 int main(void){
+
+	for(int i = 0; i <= max_depth; i++){
+		angles[i] = random(30.0f, 50.0f);
+	}
+
 	GLFWwindow* window;
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()){
