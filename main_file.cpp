@@ -21,9 +21,10 @@ using namespace std;
 float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float cameraSpeed = 0.1f;
-float tree_growth = 0.0f, tree_growth_speed = 1.5f, tree_max_height = 5.0f;
-float branch_growth = 0.0f, branch_growth_speed = 0.1f;
+float tree_growth = 0.0f, tree_growth_speed = 1.0f, tree_max_height = 5.0f;
+int max_depth = 6;
 GLuint tex;
+float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
 
 glm::vec3 camera_position   = glm::vec3(0.0f, 0.0f,  15.0f);
 glm::vec3 camera_focus 		= glm::vec3(0.0f, 0.0f, -1.0f);
@@ -56,7 +57,6 @@ float negative(float a){
 	return a;
 }
 
-int max_depth = 4;
 void draw(int depth, float height, float x, float y, float angle, float radius){
 	if (depth > 0){
 		glm::mat4 M = glm::mat4(1.0f);
@@ -66,22 +66,20 @@ void draw(int depth, float height, float x, float y, float angle, float radius){
 
 		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
 		glActiveTexture(GL_TEXTURE0); 
-		glBindTexture(GL_TEXTURE_2D,tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
 		glUniform1i(spTextured->u("tex"), 0);
 
 		Models::cone.drawWire();
 		Models::cone.drawSolid();
 
-		if (depth == max_depth) y = y + (height / 4);
-		float prevX = x, prevY = y;
-
+		float prevX, prevY;
+		prevX = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle - 40))) * height / 2;
+        prevY = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle - 40))) * height / 2;
 		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + 40))) * height / 2;
-		y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
-		prevX = prevX + (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + 40))) * height / 2;
-		prevY = prevY + (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
+        y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + 40))) * height / 2;
 
-		draw(depth - 1, height / 2, x, y, angle - 40, radius / 2);
 		draw(depth - 1, height / 2, prevX, prevY, angle + 40, radius / 2);
+		draw(depth - 1, height / 2, x, y, angle - 40, radius / 2);
 	}
 }
 
@@ -94,12 +92,20 @@ void draw_scene(GLFWwindow* window){
 	glm::mat4 V = glm::lookAt(camera_position, camera_position + camera_focus, camera_upVector);	
 	glm::mat4 M = glm::mat4(1.0f);
 
-	spTextured->use();
-	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
-	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
-	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
+	// spTextured->use();
+	// glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
+	// glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
+	// glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
+	// draw(max_depth, tree_growth, 0, tree_growth, 0, 1);
 
-	draw(max_depth, tree_max_height, 0, 0, 0, 1);
+	M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
+	M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
+	spLambert->use();
+	glUniform4f(spLambert->u("color"), 0, 0, 0, 1);
+	glUniformMatrix4fv(spLambert->u("P"), 1, false, glm::value_ptr(P));
+	glUniformMatrix4fv(spLambert->u("M"), 1, false, glm::value_ptr(M));
+	glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
+	Models::leaf.drawWire();
 
 	glfwSwapBuffers(window);
 }
@@ -139,6 +145,16 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	if(action == GLFW_PRESS){
 		if(key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
+		if(key == GLFW_KEY_LEFT) obj_speed_x= -PI;
+		if(key == GLFW_KEY_RIGHT) obj_speed_x = PI;
+		if(key == GLFW_KEY_UP) obj_speed_y = PI;
+		if(key == GLFW_KEY_DOWN) obj_speed_y = -PI;
+	}
+	if(action == GLFW_RELEASE){
+		if(key == GLFW_KEY_LEFT) obj_speed_x= 0;
+		if(key == GLFW_KEY_RIGHT) obj_speed_x = 0;
+		if(key == GLFW_KEY_UP) obj_speed_y = 0;
+		if(key == GLFW_KEY_DOWN) obj_speed_y = 0;
 	}
 }
 
@@ -215,7 +231,9 @@ int main(void){
 
 	init_opengl_program(window);
 	while (!glfwWindowShouldClose(window)){
-		tree_growth += tree_growth_speed * glfwGetTime();
+		obj_angle_x += obj_speed_x * glfwGetTime();
+		obj_angle_y += obj_speed_y * glfwGetTime();
+		if(tree_growth < tree_max_height) tree_growth += tree_growth_speed * glfwGetTime();
 		process_movement(window);
 		glfwSetTime(0);
 		draw_scene(window);
