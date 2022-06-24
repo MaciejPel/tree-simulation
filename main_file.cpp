@@ -21,13 +21,12 @@ using namespace std;
 float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float cameraSpeed = 0.1f;
-float tree_growth = 0.0f, tree_growth_speed = 1.2f, tree_max_height = 5.0f;
+float tree_growth = 0.0f, tree_growth_speed = 0.9f, tree_max_height = 5.0f, tree_radius = 0.0f;
 const int max_depth = 6;
 float angles[max_depth] = { 0 };  
-GLuint tex;
-float obj_speed_x = 0, obj_speed_y = 0, obj_angle_x = 0, obj_angle_y = 0;
+GLuint barkTexture, leafTexture;
 
-glm::vec3 camera_position   = glm::vec3(0.0f, tree_max_height,  15.0f);
+glm::vec3 camera_position   = glm::vec3(0.0f, tree_max_height, 15.0f);
 glm::vec3 camera_focus 		= glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 camera_upVector   = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -38,7 +37,22 @@ float random(float a, float b) {
     return a + r;
 }
 
-void draw(int depth, float height, float x, float y, float angle, float radius){
+void draw_leaf(float height, float x, float y, float angle){
+	glm::mat4 M = glm::mat4(1.0f);
+	M = glm::translate(M, glm::vec3(x, y, 0.0f));
+	M = glm::rotate(M, glm::radians(angle), glm::vec3(0.0f, 0.0f, 1.0f));
+	M = glm::scale(M, glm::vec3(height, height, height));
+
+	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
+	glActiveTexture(GL_TEXTURE0); 
+	glBindTexture(GL_TEXTURE_2D, leafTexture);
+	glUniform1i(spTextured->u("tex"), 0);
+
+	Models::leaf.drawWire();
+	Models::leaf.drawSolid();
+}
+
+void draw_tree(int depth, float height, float x, float y, float angle, float radius, bool leaf){
 	if (depth > 0){
 		glm::mat4 M = glm::mat4(1.0f);
 		M = glm::translate(M, glm::vec3(x, y, 0.0f));
@@ -47,12 +61,12 @@ void draw(int depth, float height, float x, float y, float angle, float radius){
 
 		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
 		glActiveTexture(GL_TEXTURE0); 
-		glBindTexture(GL_TEXTURE_2D, tex);
+		glBindTexture(GL_TEXTURE_2D, barkTexture);
 		glUniform1i(spTextured->u("tex"), 0);
 
 		Models::cone.drawWire();
 		Models::cone.drawSolid();
-		printf("%f %f\n", height, angles[depth]);
+		if(leaf) draw_leaf(height / 2.5, x, y, angle);
 
 		float prevX, prevY;
 		prevX = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle - angles[depth - 1]))) * height / 2;
@@ -60,8 +74,8 @@ void draw(int depth, float height, float x, float y, float angle, float radius){
 		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + angles[depth -1]))) * height / 2;
         y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + angles[depth -1 ]))) * height / 2;
 
-		draw(depth - 1, height / 2, prevX, prevY, angle + angles[depth - 1], radius / 2);
-		draw(depth - 1, height / 2, x, y, angle - angles[depth - 1], radius / 2);
+		draw_tree(depth - 1, height / 2, prevX, prevY, angle + angles[depth - 1], radius / 2, true);
+		draw_tree(depth - 1, height / 2, x, y, angle - angles[depth - 1], radius / 2, true);
 	}
 }
 
@@ -78,16 +92,7 @@ void draw_scene(GLFWwindow* window){
 	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
 	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
 	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
-	draw(max_depth, tree_growth, 0, tree_growth, angles[max_depth], 1);
-
-	// M = glm::rotate(M, obj_angle_x, glm::vec3(0.0f, 1.0f, 0.0f));
-	// M = glm::rotate(M, obj_angle_y, glm::vec3(1.0f, 0.0f, 0.0f));	
-	// spLambert->use();
-	// glUniform4f(spLambert->u("color"), 0, 0, 0, 1);
-	// glUniformMatrix4fv(spLambert->u("P"), 1, false, glm::value_ptr(P));
-	// glUniformMatrix4fv(spLambert->u("M"), 1, false, glm::value_ptr(M));
-	// glUniformMatrix4fv(spLambert->u("V"), 1, false, glm::value_ptr(V));
-	// Models::leaf.drawWire();
+	draw_tree(max_depth, tree_growth, 0, tree_growth + tree_radius, angles[max_depth], tree_radius, false);
 
 	glfwSwapBuffers(window);
 }
@@ -127,16 +132,6 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos){
 void keyboard_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 	if(action == GLFW_PRESS){
 		if(key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
-		if(key == GLFW_KEY_LEFT) obj_speed_x= -PI;
-		if(key == GLFW_KEY_RIGHT) obj_speed_x = PI;
-		if(key == GLFW_KEY_UP) obj_speed_y = PI;
-		if(key == GLFW_KEY_DOWN) obj_speed_y = -PI;
-	}
-	if(action == GLFW_RELEASE){
-		if(key == GLFW_KEY_LEFT) obj_speed_x= 0;
-		if(key == GLFW_KEY_RIGHT) obj_speed_x = 0;
-		if(key == GLFW_KEY_UP) obj_speed_y = 0;
-		if(key == GLFW_KEY_DOWN) obj_speed_y = 0;
 	}
 }
 
@@ -185,14 +180,16 @@ void init_opengl_program(GLFWwindow* window){
 	glEnable(GL_COLOR_MATERIAL);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_NORMALIZE);
-	char texture[] = "kora.png";
-	tex = readTexture(texture);
+	char barkFile[] = "bark.png";
+	char leafFile[] = "leaf.png";
+	barkTexture = readTexture(barkFile);
+	leafTexture = readTexture(leafFile);
 }
 
 int main(void){
 
 	for(int i = 0; i <= max_depth; i++){
-		angles[i] = random(30.0f, 50.0f);
+		angles[i] = random(25.0f, 55.0f);
 	}
 
 	GLFWwindow* window;
@@ -218,9 +215,8 @@ int main(void){
 
 	init_opengl_program(window);
 	while (!glfwWindowShouldClose(window)){
-		obj_angle_x += obj_speed_x * glfwGetTime();
-		obj_angle_y += obj_speed_y * glfwGetTime();
 		if(tree_growth < tree_max_height) tree_growth += tree_growth_speed * glfwGetTime();
+		if(tree_radius < 1.0f) tree_radius += tree_growth_speed / 3 * glfwGetTime();
 		process_movement(window);
 		glfwSetTime(0);
 		draw_scene(window);
@@ -228,7 +224,8 @@ int main(void){
 	}
 
 	free_opengl_program(window);
-	glDeleteTextures(1, &tex);
+	glDeleteTextures(1, &barkTexture);
+	glDeleteTextures(1, &leafTexture);
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
