@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <cmath>
+#include <chrono>
 
 using namespace std;
 
@@ -92,7 +93,7 @@ void draw_scene(GLFWwindow* window){
 	glUniformMatrix4fv(spTextured->u("P"), 1, false, glm::value_ptr(P));
 	glUniformMatrix4fv(spTextured->u("V"), 1, false, glm::value_ptr(V));
 	glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
-	draw_tree(max_depth, tree_growth, 0, tree_growth + tree_radius, angles[max_depth], tree_radius, false);
+	draw_tree(max_depth, tree_growth, 0, tree_growth, angles[max_depth], 1.0f, false);
 
 	glfwSwapBuffers(window);
 }
@@ -219,7 +220,11 @@ int main(void){
 		if(tree_radius < 1.0f) tree_radius += tree_growth_speed / 3 * glfwGetTime();
 		process_movement(window);
 		glfwSetTime(0);
+		auto start = std::chrono::high_resolution_clock::now();
 		draw_scene(window);
+		auto finish = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double> elapsed = finish - start;
+		std::cout << "Elapsed time: " << elapsed.count() << "s\n";
 		glfwPollEvents(); 
 	}
 
