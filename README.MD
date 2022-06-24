@@ -8,7 +8,7 @@ Scene related changes should be made in `draw_scene` function, initial scene cha
 Certainly, instead of generating the cone recursive number of times you could make one and then pass the arguments. Same applies for the calculations. I don't excatly know how it would work with the `tree_growth` but  it would improve drawing of the scene for sure.
 
 ## Results
-![alt text](https://github.com/[username]/[reponame]/blob/[branch]/image.jpg?raw=true)
+![alt text](https://raw.githubusercontent.com/MaciejPel/tree-simulation/main/tree.gif?raw=true)
 
 ## Contributing
 I won't be updating this project, feel free to fork and play around.
