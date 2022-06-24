@@ -23,7 +23,7 @@ float window_width = 1280, window_height = 720;
 float lastX = window_width / 2, lastY = window_height / 2, yaw = -90, pitch = 0;
 float cameraSpeed = 0.1f;
 float tree_growth = 0.0f, tree_growth_speed = 0.9f, tree_max_height = 5.0f, tree_radius = 0.0f;
-const int max_depth = 6;
+const int max_depth = 10;
 float angles[max_depth] = { 0 };  
 GLuint barkTexture, leafTexture;
 
@@ -49,7 +49,6 @@ void draw_leaf(float height, float x, float y, float angle){
 	glBindTexture(GL_TEXTURE_2D, leafTexture);
 	glUniform1i(spTextured->u("tex"), 0);
 
-	Models::leaf.drawWire();
 	Models::leaf.drawSolid();
 }
 
@@ -61,11 +60,10 @@ void draw_tree(int depth, float height, float x, float y, float angle, float rad
 		M = glm::scale(M, glm::vec3(radius, height, radius));
 
 		glUniformMatrix4fv(spTextured->u("M"), 1, false, glm::value_ptr(M));
-		glActiveTexture(GL_TEXTURE0); 
+		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, barkTexture);
 		glUniform1i(spTextured->u("tex"), 0);
 
-		Models::cone.drawWire();
 		Models::cone.drawSolid();
 		if(leaf) draw_leaf(height / 2.5, x, y, angle);
 
@@ -73,7 +71,7 @@ void draw_tree(int depth, float height, float x, float y, float angle, float rad
 		prevX = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle - angles[depth - 1]))) * height / 2;
         prevY = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle - angles[depth - 1]))) * height / 2;
 		x = x - (cos(glm::radians(270 + angle)) - cos(glm::radians(270 + angle + angles[depth -1]))) * height / 2;
-        y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + angles[depth -1 ]))) * height / 2;
+        y = y - (sin(glm::radians(270 + angle)) - sin(glm::radians(270 + angle + angles[depth -1]))) * height / 2;
 
 		draw_tree(depth - 1, height / 2, prevX, prevY, angle + angles[depth - 1], radius / 2, true);
 		draw_tree(depth - 1, height / 2, x, y, angle - angles[depth - 1], radius / 2, true);
@@ -190,7 +188,7 @@ void init_opengl_program(GLFWwindow* window){
 int main(void){
 
 	for(int i = 0; i <= max_depth; i++){
-		angles[i] = random(25.0f, 55.0f);
+		angles[i] = random(10.0f, 85.0f);
 	}
 
 	GLFWwindow* window;
